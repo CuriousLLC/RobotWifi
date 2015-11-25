@@ -1,11 +1,15 @@
 #include "main.h"
 #include "queue.h"
 #include "uart.h"
+#include "udp.h"
 
 static os_timer_t tick_timer;
 static queue *recv_q;
 
-//Main code function
+/**
+ * This is a debug timer. It runs every ~1s and lists each
+ * connected station to UART0.
+ */
 void
 timer_func(void *pArg)
 {
@@ -22,11 +26,17 @@ timer_func(void *pArg)
     }
 }
 
+/**
+ * This task runs as user_qTaskPrio. This should be the highest user
+ * accessible priority. We want to completely flush any waiting data
+ * out UART1. The UDP processor runs with higher priority than this
+ * function, so its possible that our recv_q can fill up if we don't
+ * process it often.
+ */
 void ICACHE_FLASH_ATTR
 process_queue()
 {
     if (!queue_empty(recv_q)) {
-        os_printf("\nXXX %u Data in queue, processing\n", recv_q->items);
         while (!queue_empty(recv_q)) {
             uart_tx_one_char_no_wait(1, queue_pop(recv_q));
         }
@@ -35,9 +45,16 @@ process_queue()
     system_os_post(user_qTaskPrio, 0, 0 );
 }
 
+/**
+ * Various tutorials have implied that we don't have much memory/time
+ * to work in the user_init function. So this function is called to setup
+ * anything that we didn't do in the user_init function.
+ */
 void ICACHE_FLASH_ATTR
 extra_init()
 {
+    struct espconn *conn;
+
     // Create a 64 byte receive queue for data
     recv_q = queue_init(64);
     if (recv_q == NULL) {
@@ -45,9 +62,15 @@ extra_init()
         return;
     }
 
-    init_udp(recv_q);
+    // We lose the conn pointer, but we never want to teardown
+    // the UDP connection anyway.
+    conn = init_udp(recv_q);
+    if (conn == NULL) {
+        os_printf("Could not initialize the UDP stack\n");
+        return;
+    }
 
-    //Start wifi config task
+    //Start our tasks and timers
     system_os_task(process_queue, user_qTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
     
     os_timer_setfn(&tick_timer, timer_func, NULL);

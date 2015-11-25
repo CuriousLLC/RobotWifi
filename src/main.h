@@ -19,8 +19,6 @@
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
 
-#define UDP_LISTEN_PORT             31337
-
 #ifdef	__cplusplus
 extern "C" {
 #endif

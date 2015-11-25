@@ -2,11 +2,17 @@
 #include "user_config.h"
 #include "espconn.h"
 #include "mem.h"
-#include "queue.h"
+#include "udp.h"
 
 static queue *recv_q;
 void recv_datagram(void *arg, char *pData, unsigned short len);
 
+/**
+ * Setup our UDP handler. The UDP receive callback will stick data
+ * in the queue*, which should be accessible from the caller.
+ * @param q queue pointer to store UDP data
+ * @return 
+ */
 struct espconn*
 init_udp(queue *q)
 {
@@ -35,11 +41,15 @@ init_udp(queue *q)
 
     recv_q = q;
     espconn_regist_recvcb(conn, recv_datagram);
+    
+    return conn;
 }
 
 void
 teardown_udp(struct espconn *conn)
 {
+    // XXX This is undocumented and the difference between 
+    // espconn_delete and espconn_disconnect isn't spelled out.
     espconn_delete(conn);
     os_free(conn->proto.udp);
     os_free(conn);
