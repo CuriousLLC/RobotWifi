@@ -1,6 +1,8 @@
 Robot Wifi Revision 1
 =====================
 
+* ESP8266 (Huzzah board)
+
 This package sets up an Access Point and waits for UDP datagrams from a client. Those
 datagrams are sent out UART1 (mux with GPIO2). There is no RX for UART1, so we can
 only send messages.
