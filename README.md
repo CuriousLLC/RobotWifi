@@ -14,6 +14,7 @@ Teensy LC. Right now we are keeping it in favor of completing revision 1 even if
 isn't perfect.
 
 * https://github.com/CuriousLLC/CuriousRobot - Teensy LC message controller
+* https://github.com/CuriousLLC/RobotController - Mobile controller
 
 Build
 =====
